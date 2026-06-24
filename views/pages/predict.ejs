@@ -1,0 +1,65 @@
+<div class="page-header">
+  <div>
+    <div class="page-title">Symptom Checker</div>
+    <div class="page-subtitle">Enter your symptoms for AI-powered disease analysis</div>
+  </div>
+  <span style="font-size:11px;background:rgba(6,214,160,0.15);color:#06d6a0;padding:4px 12px;border-radius:100px;font-weight:600;align-self:center">
+    <i class="fas fa-brain"></i> v2.0 · Profile-Aware AI
+  </span>
+</div>
+
+<div class="alert alert-warning">
+  <i class="fas fa-exclamation-triangle"></i>
+  <div>This tool is for informational purposes only. It does not replace professional medical advice. Always consult a qualified healthcare professional for diagnosis and treatment.</div>
+</div>
+
+<!-- Input Section -->
+<div class="card mb-6">
+  <div class="card-header">
+    <div class="card-title"><i class="fas fa-keyboard"></i> Enter Symptoms</div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted)">
+      <i class="fas fa-info-circle"></i>
+      Type a symptom and press Enter or comma to add
+    </div>
+  </div>
+
+  <form id="predictForm">
+    <div class="form-group">
+      <label class="form-label">Your Symptoms</label>
+      <div class="tags-input-wrapper" id="tagsWrapper">
+        <input type="text" class="tags-input" id="tagsInput" placeholder="Type symptom and press Enter...">
+      </div>
+    </div>
+
+    <!-- Voice input -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+      <button type="button" class="voice-btn" id="voiceBtn" title="Click to use voice input">
+        <i class="fas fa-microphone"></i>
+      </button>
+      <span style="font-size:13px;color:var(--text-muted)">Or use voice to describe your symptoms</span>
+    </div>
+
+    <!-- Common symptoms — expanded in v2.0 -->
+    <div class="form-group">
+      <label class="form-label">Common Symptoms (click to add)</label>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <% ['headache', 'fever', 'cough', 'fatigue', 'nausea', 'chest pain', 'shortness of breath',
+            'dizziness', 'sore throat', 'runny nose', 'body aches', 'vomiting', 'stomach pain',
+            'loss of appetite', 'blurred vision', 'frequent urination', 'excessive thirst',
+            'joint pain', 'rash', 'weight loss', 'chills', 'muscle pain', 'loss of taste', 'loss of smell',
+            'eye pain', 'burning urination', 'back pain', 'palpitations'].forEach(s => { %>
+        <button type="button" class="btn btn-outline btn-sm symptom-suggestion">
+          <%= s %>
+        </button>
+        <% }) %>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-lg" id="predictBtn">
+      <i class="fas fa-brain"></i> Analyze Symptoms
+    </button>
+  </form>
+</div>
+
+<!-- Results Section -->
+<div id="resultsSection" style="display:none"></div>

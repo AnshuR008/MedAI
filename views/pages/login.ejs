@@ -1,0 +1,99 @@
+<div class="auth-form-wrapper">
+  <div class="auth-form-title">Welcome back</div>
+  <div class="auth-form-subtitle">Sign in to your MedAI account</div>
+
+  <% if (message) { %>
+    <div class="alert alert-info">
+      <i class="fas fa-info-circle"></i> <%= message %>
+    </div>
+  <% } %>
+
+  <% if (error) { %>
+    <div class="alert alert-danger">
+      <i class="fas fa-exclamation-circle"></i> <%= error %>
+    </div>
+  <% } %>
+
+  <div id="loginAlert"></div>
+
+  <form id="loginForm" novalidate>
+    <div class="form-group">
+      <label class="form-label">Email Address</label>
+      <div class="input-group">
+        <i class="fas fa-envelope input-icon"></i>
+        <input type="email" name="email" id="loginEmail" class="form-control" placeholder="you@example.com" required autocomplete="email">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" style="display:flex;justify-content:space-between">
+        Password
+        <a href="#" style="font-size:12px;color:var(--teal);font-weight:500">Forgot password?</a>
+      </label>
+      <div class="input-group">
+        <i class="fas fa-lock input-icon"></i>
+        <input type="password" name="password" id="loginPassword" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+        <span class="input-addon-right" data-toggle-password="loginPassword">
+          <i class="fas fa-eye"></i>
+        </span>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-full btn-lg" id="loginBtn">
+      <i class="fas fa-sign-in-alt"></i> Sign In
+    </button>
+
+    <div class="auth-divider">or try demo</div>
+
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-outline btn-full" id="demoUserBtn">
+        <i class="fas fa-user"></i> Demo User
+      </button>
+      <button type="button" class="btn btn-outline btn-full" id="demoAdminBtn">
+        <i class="fas fa-shield-alt"></i> Demo Admin
+      </button>
+    </div>
+
+    <div class="auth-footer">
+      Don't have an account? <a href="/register">Create one free</a>
+    </div>
+  </form>
+</div>
+
+<script>
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('loginBtn');
+  const alertDiv = document.getElementById('loginAlert');
+
+  setButtonLoading(btn, true, 'Signing in...');
+  alertDiv.innerHTML = '';
+
+  try {
+    const data = await api.post('/api/login', {
+      email: document.getElementById('loginEmail').value,
+      password: document.getElementById('loginPassword').value
+    });
+
+    if (data.success) {
+      showToast('Login successful! Redirecting...', 'success');
+      setTimeout(() => window.location.href = '/dashboard', 800);
+    }
+  } catch (err) {
+    alertDiv.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> ${err.message}</div>`;
+    setButtonLoading(btn, false);
+  }
+});
+
+document.getElementById('demoUserBtn').addEventListener('click', async () => {
+  document.getElementById('loginEmail').value = 'demo@medai.com';
+  document.getElementById('loginPassword').value = 'demo123';
+  document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+});
+
+document.getElementById('demoAdminBtn').addEventListener('click', async () => {
+  document.getElementById('loginEmail').value = 'admin@medai.com';
+  document.getElementById('loginPassword').value = 'admin123';
+  document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+});
+</script>

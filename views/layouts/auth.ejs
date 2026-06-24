@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title %></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body class="auth-body">
+  <div class="auth-container">
+    <div class="auth-panel-left">
+      <div class="auth-brand">
+        <div class="auth-brand-icon">
+          <i class="fas fa-heartbeat"></i>
+        </div>
+        <h1>MedAI</h1>
+        <p>Your AI-Powered Medical Assistant</p>
+      </div>
+      <div class="auth-features">
+        <div class="auth-feature">
+          <i class="fas fa-brain"></i>
+          <div>
+            <strong>AI Disease Prediction</strong>
+            <span>Instant symptom analysis</span>
+          </div>
+        </div>
+        <div class="auth-feature">
+          <i class="fas fa-comment-dots"></i>
+          <div>
+            <strong>24/7 AI Chatbot</strong>
+            <span>Always available guidance</span>
+          </div>
+        </div>
+        <div class="auth-feature">
+          <i class="fas fa-chart-bar"></i>
+          <div>
+            <strong>Health Analytics</strong>
+            <span>Track your health journey</span>
+          </div>
+        </div>
+        <div class="auth-feature">
+          <i class="fas fa-shield-alt"></i>
+          <div>
+            <strong>Secure & Private</strong>
+            <span>End-to-end encryption</span>
+          </div>
+        </div>
+      </div>
+      <div class="auth-disclaimer">
+        <i class="fas fa-info-circle"></i>
+        <span>MedAI provides information only. Always consult a qualified healthcare professional for medical decisions.</span>
+      </div>
+    </div>
+    <div class="auth-panel-right">
+      <%- body %>
+    </div>
+  </div>
+  <script src="/js/main.js"></script>
+</body>
+</html>

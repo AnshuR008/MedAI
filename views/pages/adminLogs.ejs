@@ -1,0 +1,181 @@
+<div class="page-header">
+  <div>
+    <div class="page-title">System Logs</div>
+    <div class="page-subtitle">Prediction activity, chat sessions, and server events</div>
+  </div>
+  <span class="badge badge-danger"><i class="fas fa-shield-alt"></i> Admin</span>
+</div>
+
+<!-- Tab navigation -->
+<div style="display:flex;gap:4px;margin-bottom:24px;background:var(--gray-100);border-radius:var(--radius);padding:4px;width:fit-content">
+  <button class="btn btn-primary btn-sm" id="tab-pred" onclick="switchTab('pred')">
+    <i class="fas fa-stethoscope"></i> Predictions
+  </button>
+  <button class="btn btn-ghost btn-sm" id="tab-chat" onclick="switchTab('chat')">
+    <i class="fas fa-comment"></i> Chats
+  </button>
+  <button class="btn btn-ghost btn-sm" id="tab-server" onclick="switchTab('server')">
+    <i class="fas fa-terminal"></i> Server
+  </button>
+</div>
+
+<!-- Prediction logs -->
+<div id="panel-pred">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fas fa-stethoscope"></i> Prediction Logs</div>
+      <button class="btn btn-outline btn-sm" onclick="loadPredLogs()"><i class="fas fa-sync-alt"></i></button>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>User</th><th>Symptoms</th><th>Primary Diagnosis</th><th>Confidence</th><th>Method</th><th>Date</th></tr></thead>
+        <tbody id="predLogsBody">
+          <tr><td colspan="6" style="text-align:center;padding:32px"><div class="loading-spinner dark" style="margin:0 auto 12px"></div>Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="predPag" style="display:flex;justify-content:center;gap:8px;padding:16px"></div>
+  </div>
+</div>
+
+<!-- Chat logs -->
+<div id="panel-chat" style="display:none">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fas fa-comment-medical"></i> Chat Logs</div>
+      <button class="btn btn-outline btn-sm" onclick="loadChatLogs()"><i class="fas fa-sync-alt"></i></button>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>User</th><th>Session Title</th><th>Messages</th><th>Tags</th><th>Last Activity</th></tr></thead>
+        <tbody id="chatLogsBody">
+          <tr><td colspan="5" style="text-align:center;padding:32px">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="chatPag" style="display:flex;justify-content:center;gap:8px;padding:16px"></div>
+  </div>
+</div>
+
+<!-- Server logs -->
+<div id="panel-server" style="display:none">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fas fa-terminal"></i> Server Log (latest 200 lines)</div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline btn-sm" onclick="loadServerLogs()"><i class="fas fa-sync-alt"></i> Refresh</button>
+        <button class="btn btn-outline btn-sm" id="autoRefreshBtn" onclick="toggleAutoRefresh()">
+          <i class="fas fa-play"></i> Auto-refresh
+        </button>
+      </div>
+    </div>
+    <div style="background:var(--navy);border-radius:var(--radius);padding:20px;max-height:500px;overflow-y:auto;font-family:monospace;font-size:12px;line-height:1.7" id="serverLogs">
+      <span style="color:var(--gray-500)">Loading logs…</span>
+    </div>
+  </div>
+</div>
+
+<script>
+let autoRefreshInterval = null;
+let predPage = 1, chatPage = 1;
+
+function switchTab(tab) {
+  ['pred','chat','server'].forEach(t => {
+    document.getElementById(`panel-${t}`).style.display = t===tab ? 'block' : 'none';
+    document.getElementById(`tab-${t}`).className = t===tab ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
+  });
+  if (tab==='pred')   loadPredLogs(predPage);
+  if (tab==='chat')   loadChatLogs(chatPage);
+  if (tab==='server') loadServerLogs();
+}
+
+async function loadPredLogs(page=1) {
+  predPage = page;
+  const tbody = document.getElementById('predLogsBody');
+  try {
+    const data = await api.get(`/api/admin/logs/predictions?page=${page}&limit=20`);
+    tbody.innerHTML = data.predictions.map(p => `
+      <tr>
+        <td>
+          <div style="font-size:13px;font-weight:600">${p.user?.name||'Unknown'}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${p.user?.email||''}</div>
+        </td>
+        <td style="font-size:12px">${(p.symptoms||[]).slice(0,3).join(', ')}${(p.symptoms||[]).length>3?'…':''}</td>
+        <td style="font-weight:600;font-size:13px">${p.primaryDiagnosis?.disease||'—'}</td>
+        <td>
+          <div class="d-flex align-center gap-2">
+            <div class="progress" style="width:50px">
+              <div class="progress-bar" style="width:${p.predictions?.[0]?.probability||0}%"></div>
+            </div>
+            <span style="font-size:12px">${p.predictions?.[0]?.probability||0}%</span>
+          </div>
+        </td>
+        <td><span class="badge badge-info">${p.inputMethod||'text'}</span></td>
+        <td style="font-size:12px;color:var(--text-muted)">${new Date(p.createdAt).toLocaleString()}</td>
+      </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted)">No predictions</td></tr>';
+
+    document.getElementById('predPag').innerHTML = Array.from({length:data.pages},(_,i)=>
+      `<button class="btn btn-sm ${i+1===predPage?'btn-primary':'btn-outline'}" onclick="loadPredLogs(${i+1})">${i+1}</button>`
+    ).join('');
+  } catch(e) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--danger)">${e.message}</td></tr>`; }
+}
+
+async function loadChatLogs(page=1) {
+  chatPage = page;
+  const tbody = document.getElementById('chatLogsBody');
+  try {
+    const data = await api.get(`/api/admin/logs/chats?page=${page}&limit=20`);
+    tbody.innerHTML = data.chats.map(c => `
+      <tr>
+        <td>
+          <div style="font-size:13px;font-weight:600">${c.user?.name||'Unknown'}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${c.user?.email||''}</div>
+        </td>
+        <td style="font-size:13px">${c.sessionTitle||'Untitled'}</td>
+        <td style="font-weight:600">${(c.messages||[]).length}</td>
+        <td>${(c.tags||[]).map(t=>`<span class="badge badge-primary" style="margin-right:4px">${t}</span>`).join('')||'—'}</td>
+        <td style="font-size:12px;color:var(--text-muted)">${new Date(c.updatedAt).toLocaleString()}</td>
+      </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">No chats</td></tr>';
+
+    document.getElementById('chatPag').innerHTML = Array.from({length:data.pages},(_,i)=>
+      `<button class="btn btn-sm ${i+1===chatPage?'btn-primary':'btn-outline'}" onclick="loadChatLogs(${i+1})">${i+1}</button>`
+    ).join('');
+  } catch(e) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--danger)">${e.message}</td></tr>`; }
+}
+
+const LOG_COLORS = {
+  'ERROR': '#ef4444', 'WARN': '#f59e0b', 'INFO': '#06d6a0', 'DEBUG': '#94a3b8'
+};
+const LOG_RE = /\[(ERROR|WARN|INFO|DEBUG)\]/;
+
+async function loadServerLogs() {
+  const box = document.getElementById('serverLogs');
+  try {
+    const { logs } = await api.get('/api/admin/logs/server');
+    if (!logs.length) { box.innerHTML = '<span style="color:var(--gray-500)">No log entries yet</span>'; return; }
+    box.innerHTML = logs.map(line => {
+      const m = line.match(LOG_RE);
+      const col = m ? (LOG_COLORS[m[1]] || '#94a3b8') : '#94a3b8';
+      return `<div style="color:${col};margin-bottom:2px;word-break:break-all">${escHtml(line)}</div>`;
+    }).join('');
+    box.scrollTop = 0;
+  } catch(e) { box.innerHTML = `<span style="color:#ef4444">Error loading logs: ${e.message}</span>`; }
+}
+
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function toggleAutoRefresh() {
+  const btn = document.getElementById('autoRefreshBtn');
+  if (autoRefreshInterval) {
+    clearInterval(autoRefreshInterval); autoRefreshInterval = null;
+    btn.innerHTML = '<i class="fas fa-play"></i> Auto-refresh';
+    btn.classList.replace('btn-primary','btn-outline');
+  } else {
+    autoRefreshInterval = setInterval(loadServerLogs, 5000);
+    btn.innerHTML = '<i class="fas fa-stop"></i> Stop refresh';
+    btn.classList.replace('btn-outline','btn-primary');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => loadPredLogs());
+</script>

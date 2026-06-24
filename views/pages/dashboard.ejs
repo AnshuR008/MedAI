@@ -1,0 +1,280 @@
+<div class="page-header">
+  <div>
+    <div class="page-title">Good <%= new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 17 ? 'Afternoon' : 'Evening' %>, <%= user.name.split(' ')[0] %> 👋</div>
+    <div class="page-subtitle">Here's your health overview</div>
+  </div>
+  <a href="/predict" class="btn btn-primary">
+    <i class="fas fa-stethoscope"></i> Check Symptoms
+  </a>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card blue">
+    <div class="stat-icon blue"><i class="fas fa-stethoscope"></i></div>
+    <div class="stat-value" data-count="<%= stats.totalPredictions %>">0</div>
+    <div class="stat-label">Total Predictions</div>
+    <span class="stat-change up"><i class="fas fa-arrow-up"></i> Health tracking</span>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-icon green"><i class="fas fa-comment-medical"></i></div>
+    <div class="stat-value" data-count="<%= stats.totalChats %>">0</div>
+    <div class="stat-label">AI Consultations</div>
+  </div>
+  <% if (profile) { %>
+  <div class="stat-card orange">
+    <div class="stat-icon orange"><i class="fas fa-weight"></i></div>
+    <div class="stat-value"><%= profile.bmi ? profile.bmi.toFixed(1) : '—' %></div>
+    <div class="stat-label">BMI Score</div>
+    <% if (profile.bmi) { %>
+    <span class="stat-change <%= profile.bmi < 25 ? 'up' : 'down' %>">
+      <%= profile.bmi < 18.5 ? 'Underweight' : profile.bmi < 25 ? 'Normal' : profile.bmi < 30 ? 'Overweight' : 'Obese' %>
+    </span>
+    <% } %>
+  </div>
+  <div class="stat-card purple">
+    <div class="stat-icon purple"><i class="fas fa-tint"></i></div>
+    <div class="stat-value"><%= profile.bloodGroup || '—' %></div>
+    <div class="stat-label">Blood Group</div>
+  </div>
+  <% } %>
+</div>
+
+<!-- Health Risk Score + Medications Row -->
+<div class="grid-2" style="margin-bottom:20px">
+
+  <!-- Health Risk Score Card (NEW v2.0) -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fas fa-shield-alt"></i> Health Risk Score</div>
+      <span style="font-size:11px;background:rgba(0,180,216,0.15);color:var(--teal);padding:3px 10px;border-radius:100px;font-weight:600">NEW</span>
+    </div>
+    <% if (healthRisk) { %>
+    <div style="display:flex;align-items:center;gap:24px;margin-bottom:20px">
+      <!-- Circular score display -->
+      <div style="position:relative;width:90px;height:90px;flex-shrink:0">
+        <svg width="90" height="90" style="transform:rotate(-90deg)">
+          <circle cx="45" cy="45" r="38" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="8"/>
+          <circle cx="45" cy="45" r="38" fill="none"
+            stroke="<%= healthRisk.level === 'good' ? '#06d6a0' : healthRisk.level === 'fair' ? '#ffd166' : healthRisk.level === 'poor' ? '#ef476f' : '#c1121f' %>"
+            stroke-width="8"
+            stroke-dasharray="<%= Math.round(2 * 3.14159 * 38) %>"
+            stroke-dashoffset="<%= Math.round(2 * 3.14159 * 38 * (1 - healthRisk.score / 100)) %>"
+            stroke-linecap="round"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+          <span style="font-size:22px;font-weight:700;color:white"><%= healthRisk.score %></span>
+          <span style="font-size:10px;color:var(--text-muted)">/ 100</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:18px;font-weight:700;color:<%= healthRisk.level === 'good' ? '#06d6a0' : healthRisk.level === 'fair' ? '#ffd166' : '#ef476f' %>">
+          <%= healthRisk.label %> Health
+        </div>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:4px">
+          Based on your health profile
+        </div>
+        <% if (healthRisk.risks.length === 0) { %>
+        <div style="font-size:13px;color:#06d6a0;margin-top:8px"><i class="fas fa-check-circle"></i> No major risk factors detected</div>
+        <% } else { %>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:8px"><i class="fas fa-exclamation-circle" style="color:#ffd166"></i> <%= healthRisk.risks.length %> risk factor<%= healthRisk.risks.length > 1 ? 's' : '' %> identified</div>
+        <% } %>
+      </div>
+    </div>
+    <% if (healthRisk.risks.length > 0) { %>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <% healthRisk.risks.slice(0,3).forEach(r => { %>
+      <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:10px 12px;border-left:3px solid <%= r.impact === 'high' ? '#ef476f' : r.impact === 'medium' ? '#ffd166' : '#06d6a0' %>">
+        <div style="font-size:12px;font-weight:600;color:white;margin-bottom:3px"><%= r.factor %></div>
+        <div style="font-size:11px;color:var(--text-muted)"><%= r.tip %></div>
+      </div>
+      <% }) %>
+      <% if (healthRisk.risks.length > 3) { %>
+      <a href="/profile" style="font-size:12px;color:var(--teal);text-decoration:none">+ <%= healthRisk.risks.length - 3 %> more — update profile to see all</a>
+      <% } %>
+    </div>
+    <% } %>
+    <% } else { %>
+    <div class="empty-state" style="padding:24px">
+      <div class="empty-icon"><i class="fas fa-shield-alt"></i></div>
+      <h3>Complete Your Profile</h3>
+      <p>Add your health details to get a personalised risk score</p>
+      <a href="/profile" class="btn btn-primary btn-sm mt-4">Update Profile</a>
+    </div>
+    <% } %>
+  </div>
+
+  <!-- Medication Reminders (NEW v2.0) -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fas fa-pills"></i> Medication Reminders</div>
+      <a href="/medications" class="btn btn-ghost btn-sm"><i class="fas fa-plus"></i> Manage</a>
+    </div>
+    <% if (medications && medications.length > 0) { %>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <% medications.slice(0,4).forEach(med => { %>
+      <div style="display:flex;align-items:center;gap:12px;padding:10px;background:rgba(255,255,255,0.04);border-radius:8px">
+        <div style="width:10px;height:10px;border-radius:50%;background:<%= med.color || '#00b4d8' %>;flex-shrink:0"></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><%= med.medicationName %></div>
+          <div style="font-size:11px;color:var(--text-muted)"><%= med.dosage || '' %> · <%= med.frequency.replace(/_/g,' ') %></div>
+        </div>
+        <% if (med.times && med.times.length > 0) { %>
+        <span style="font-size:11px;background:rgba(0,180,216,0.15);color:var(--teal);padding:2px 8px;border-radius:100px"><%= med.times[0] %></span>
+        <% } %>
+      </div>
+      <% }) %>
+      <% if (medications.length > 4) { %>
+      <a href="/medications" style="font-size:12px;color:var(--teal);text-decoration:none;text-align:center">View all <%= medications.length %> medications →</a>
+      <% } %>
+    </div>
+    <% } else { %>
+    <div class="empty-state" style="padding:24px">
+      <div class="empty-icon"><i class="fas fa-pills"></i></div>
+      <h3>No Medications Tracked</h3>
+      <p>Add your medications to keep track of your doses</p>
+      <a href="/medications" class="btn btn-primary btn-sm mt-4">Add Medication</a>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<div class="grid-2" style="margin-bottom:20px">
+  <!-- Quick Actions -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fas fa-bolt"></i> Quick Actions</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <a href="/predict" class="btn btn-primary" style="flex-direction:column;padding:18px;gap:8px;height:auto">
+        <i class="fas fa-stethoscope" style="font-size:22px"></i>
+        <span>Check Symptoms</span>
+      </a>
+      <a href="/chat" class="btn btn-outline" style="flex-direction:column;padding:18px;gap:8px;height:auto">
+        <i class="fas fa-comment-dots" style="font-size:22px"></i>
+        <span>AI Chat</span>
+      </a>
+      <a href="/diseases" class="btn btn-outline" style="flex-direction:column;padding:18px;gap:8px;height:auto">
+        <i class="fas fa-search" style="font-size:22px"></i>
+        <span>Search Diseases</span>
+      </a>
+      <a href="/medications" class="btn btn-outline" style="flex-direction:column;padding:18px;gap:8px;height:auto">
+        <i class="fas fa-pills" style="font-size:22px"></i>
+        <span>Medications</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Health Profile -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fas fa-user-circle"></i> Health Profile</div>
+      <a href="/profile" class="btn btn-ghost btn-sm"><i class="fas fa-edit"></i> Edit</a>
+    </div>
+    <% if (profile && (profile.age || profile.gender)) { %>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <% if (profile.age) { %>
+      <div class="d-flex justify-between">
+        <span style="font-size:13px;color:var(--text-muted)"><i class="fas fa-birthday-cake" style="width:16px;color:var(--teal)"></i> Age</span>
+        <span style="font-size:13px;font-weight:600"><%= profile.age %> years</span>
+      </div>
+      <% } %>
+      <% if (profile.gender) { %>
+      <div class="d-flex justify-between">
+        <span style="font-size:13px;color:var(--text-muted)"><i class="fas fa-venus-mars" style="width:16px;color:var(--teal)"></i> Gender</span>
+        <span style="font-size:13px;font-weight:600;text-transform:capitalize"><%= profile.gender %></span>
+      </div>
+      <% } %>
+      <% if (profile.weight) { %>
+      <div class="d-flex justify-between">
+        <span style="font-size:13px;color:var(--text-muted)"><i class="fas fa-weight" style="width:16px;color:var(--teal)"></i> Weight</span>
+        <span style="font-size:13px;font-weight:600"><%= profile.weight %> kg</span>
+      </div>
+      <% } %>
+      <% if (profile.height) { %>
+      <div class="d-flex justify-between">
+        <span style="font-size:13px;color:var(--text-muted)"><i class="fas fa-ruler-vertical" style="width:16px;color:var(--teal)"></i> Height</span>
+        <span style="font-size:13px;font-weight:600"><%= profile.height %> cm</span>
+      </div>
+      <% } %>
+      <% if (profile.allergies && profile.allergies.length > 0) { %>
+      <div class="d-flex justify-between">
+        <span style="font-size:13px;color:var(--text-muted)"><i class="fas fa-allergies" style="width:16px;color:var(--warning)"></i> Allergies</span>
+        <span style="font-size:13px;font-weight:600"><%= profile.allergies.join(', ') %></span>
+      </div>
+      <% } %>
+    </div>
+    <% } else { %>
+    <div class="empty-state" style="padding:24px">
+      <div class="empty-icon"><i class="fas fa-user-edit"></i></div>
+      <h3>Profile Incomplete</h3>
+      <p>Complete your health profile for better recommendations</p>
+      <a href="/profile" class="btn btn-primary btn-sm mt-4">Complete Profile</a>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- Recent Predictions -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><i class="fas fa-history"></i> Recent Predictions</div>
+    <a href="/history" class="btn btn-ghost btn-sm">View All</a>
+  </div>
+  
+  <% if (recentPredictions && recentPredictions.length > 0) { %>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Symptoms</th>
+          <th>Primary Diagnosis</th>
+          <th>Confidence</th>
+          <th>Severity</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% recentPredictions.forEach(p => { %>
+        <tr>
+          <td style="font-size:12px;color:var(--text-muted)">
+            <%= new Date(p.createdAt).toLocaleDateString() %>
+          </td>
+          <td>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;max-width:200px">
+              <% p.symptoms.slice(0, 3).forEach(s => { %>
+                <span class="tag" style="padding:2px 8px;font-size:11px"><%= s %></span>
+              <% }) %>
+              <% if (p.symptoms.length > 3) { %>
+                <span style="font-size:11px;color:var(--text-muted)">+<%= p.symptoms.length - 3 %> more</span>
+              <% } %>
+            </div>
+          </td>
+          <td style="font-weight:600;font-size:14px"><%= p.primaryDiagnosis?.disease || 'Unknown' %></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="progress" style="width:60px">
+                <div class="progress-bar" style="width:<%= p.predictions[0]?.probability || 0 %>%"></div>
+              </div>
+              <span style="font-size:13px;font-weight:600"><%= p.predictions[0]?.probability || 0 %>%</span>
+            </div>
+          </td>
+          <td>
+            <span class="badge badge-<%= p.predictions[0]?.severity === 'severe' || p.predictions[0]?.severity === 'critical' ? 'danger' : p.predictions[0]?.severity === 'moderate' ? 'warning' : 'success' %>">
+              <%= p.predictions[0]?.severity || 'mild' %>
+            </span>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <% } else { %>
+  <div class="empty-state">
+    <div class="empty-icon"><i class="fas fa-stethoscope"></i></div>
+    <h3>No Predictions Yet</h3>
+    <p>Use the Symptom Checker to get your first AI diagnosis</p>
+    <a href="/predict" class="btn btn-primary btn-sm mt-4">Check Symptoms</a>
+  </div>
+  <% } %>
+</div>

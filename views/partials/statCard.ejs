@@ -1,0 +1,30 @@
+<%
+/*
+  Usage: <%- include('../partials/statCard', {
+    color:  'blue',          // blue | green | orange | purple
+    icon:   'fa-users',
+    value:  42,              // number (will animate) or string
+    label:  'Total Users',
+    change: '+12%',          // optional
+    up:     true             // optional – true=green badge, false=red badge
+  }) %>
+*/
+const _color  = locals.color  || 'blue';
+const _icon   = locals.icon   || 'fa-chart-bar';
+const _value  = locals.value  ?? 0;
+const _label  = locals.label  || 'Metric';
+const _change = locals.change || null;
+const _up     = locals.up !== undefined ? locals.up : true;
+%>
+<div class="stat-card <%= _color %>">
+  <div class="stat-icon <%= _color %>"><i class="fas <%= _icon %>"></i></div>
+  <div class="stat-value" data-count="<%= typeof _value === 'number' ? _value : '' %>">
+    <%= _value %>
+  </div>
+  <div class="stat-label"><%= _label %></div>
+  <% if (_change) { %>
+    <span class="stat-change <%= _up ? 'up' : 'down' %>">
+      <i class="fas fa-arrow-<%= _up ? 'up' : 'down' %>"></i> <%= _change %>
+    </span>
+  <% } %>
+</div>

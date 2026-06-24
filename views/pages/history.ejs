@@ -1,0 +1,77 @@
+<div class="page-header">
+  <div>
+    <div class="page-title">Prediction History</div>
+    <div class="page-subtitle">Your past symptom analyses</div>
+  </div>
+  <a href="/predict" class="btn btn-primary">
+    <i class="fas fa-plus"></i> New Analysis
+  </a>
+</div>
+
+<% if (predictions && predictions.length > 0) { %>
+<div class="card">
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Date & Time</th>
+          <th>Symptoms</th>
+          <th>Primary Diagnosis</th>
+          <th>Confidence</th>
+          <th>Severity</th>
+          <th>Method</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% predictions.forEach(p => { %>
+        <tr>
+          <td>
+            <div style="font-size:13px;font-weight:600"><%= new Date(p.createdAt).toLocaleDateString() %></div>
+            <div style="font-size:11px;color:var(--text-muted)"><%= new Date(p.createdAt).toLocaleTimeString() %></div>
+          </td>
+          <td>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;max-width:200px">
+              <% p.symptoms.slice(0, 3).forEach(s => { %>
+                <span class="tag" style="padding:2px 8px;font-size:11px"><%= s %></span>
+              <% }) %>
+              <% if (p.symptoms.length > 3) { %>
+                <span style="font-size:11px;color:var(--text-muted);align-self:center">+<%= p.symptoms.length - 3 %> more</span>
+              <% } %>
+            </div>
+          </td>
+          <td style="font-weight:600;font-size:14px"><%= p.primaryDiagnosis?.disease || 'Unknown' %></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="progress" style="width:50px">
+                <div class="progress-bar" style="width:<%= p.predictions[0]?.probability || 0 %>%"></div>
+              </div>
+              <span style="font-size:12px;font-weight:600"><%= p.predictions[0]?.probability || 0 %>%</span>
+            </div>
+          </td>
+          <td>
+            <span class="badge badge-<%= p.predictions[0]?.severity === 'severe' || p.predictions[0]?.severity === 'critical' ? 'danger' : p.predictions[0]?.severity === 'moderate' ? 'warning' : 'success' %>">
+              <%= p.predictions[0]?.severity || 'mild' %>
+            </span>
+          </td>
+          <td>
+            <span class="badge badge-info">
+              <i class="fas fa-<%= p.inputMethod === 'voice' ? 'microphone' : 'keyboard' %>"></i>
+              <%= p.inputMethod || 'text' %>
+            </span>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<% } else { %>
+<div class="card">
+  <div class="empty-state">
+    <div class="empty-icon"><i class="fas fa-history"></i></div>
+    <h3>No Prediction History</h3>
+    <p>Your symptom analyses will appear here after your first prediction</p>
+    <a href="/predict" class="btn btn-primary mt-4">Make Your First Prediction</a>
+  </div>
+</div>
+<% } %>

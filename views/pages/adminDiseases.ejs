@@ -1,0 +1,207 @@
+<div class="page-header">
+  <div>
+    <div class="page-title">Disease Database</div>
+    <div class="page-subtitle">Manage the medical knowledge base</div>
+  </div>
+  <button class="btn btn-primary" onclick="openDiseaseModal()">
+    <i class="fas fa-plus"></i> Add Disease
+  </button>
+</div>
+
+<!-- Filter bar -->
+<div class="card mb-6">
+  <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+    <div class="input-group" style="flex:1;min-width:200px">
+      <i class="fas fa-search input-icon"></i>
+      <input class="form-control" id="diseaseSearch" placeholder="Search diseases…" oninput="debounce(loadDiseases,400)()">
+    </div>
+    <select class="form-control" id="categoryFilter" style="width:180px" onchange="loadDiseases()">
+      <option value="">All Categories</option>
+      <option value="cardiovascular">Cardiovascular</option>
+      <option value="respiratory">Respiratory</option>
+      <option value="digestive">Digestive</option>
+      <option value="neurological">Neurological</option>
+      <option value="infectious">Infectious</option>
+      <option value="endocrine">Endocrine</option>
+      <option value="musculoskeletal">Musculoskeletal</option>
+      <option value="mental_health">Mental Health</option>
+      <option value="other">Other</option>
+    </select>
+  </div>
+</div>
+
+<!-- Diseases table -->
+<div class="card">
+  <div class="table-wrapper">
+    <table>
+      <thead><tr><th>Name</th><th>Category</th><th>Severity</th><th>Symptoms</th><th>Searches</th><th>Actions</th></tr></thead>
+      <tbody id="diseaseTableBody">
+        <tr><td colspan="6" style="text-align:center;padding:32px"><div class="loading-spinner dark" style="margin:0 auto 12px"></div>Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div id="diseasePagination" style="display:flex;justify-content:center;gap:8px;padding:16px"></div>
+</div>
+
+<!-- Disease Modal -->
+<div id="diseaseModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;overflow-y:auto;padding:20px">
+  <div class="card" style="max-width:680px;margin:0 auto">
+    <div class="card-header">
+      <div class="card-title" id="modalTitle"><i class="fas fa-plus"></i> Add Disease</div>
+      <button class="btn-ghost btn-icon" onclick="closeDiseaseModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="modalAlert"></div>
+    <form id="diseaseForm">
+      <div class="grid-2" style="gap:12px">
+        <div class="form-group">
+          <label class="form-label">Disease Name *</label>
+          <input class="form-control" name="name" required placeholder="e.g. Type 2 Diabetes">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category *</label>
+          <select class="form-control" name="category" required>
+            <option value="">Select…</option>
+            <option value="cardiovascular">Cardiovascular</option>
+            <option value="respiratory">Respiratory</option>
+            <option value="digestive">Digestive</option>
+            <option value="neurological">Neurological</option>
+            <option value="infectious">Infectious</option>
+            <option value="endocrine">Endocrine</option>
+            <option value="musculoskeletal">Musculoskeletal</option>
+            <option value="mental_health">Mental Health</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description *</label>
+        <textarea class="form-control" name="description" rows="3" required placeholder="Brief clinical description…"></textarea>
+      </div>
+      <div class="grid-2" style="gap:12px">
+        <div class="form-group">
+          <label class="form-label">Severity</label>
+          <select class="form-control" name="severity">
+            <option value="mild">Mild</option>
+            <option value="moderate">Moderate</option>
+            <option value="severe">Severe</option>
+            <option value="critical">Critical</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ICD-10 Code</label>
+          <input class="form-control" name="icd10Code" placeholder="e.g. E11">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Symptoms (comma-separated)</label>
+        <input class="form-control" name="symptoms" placeholder="fatigue, thirst, frequent urination…">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Precautions (comma-separated)</label>
+        <input class="form-control" name="precautions" placeholder="Monitor blood sugar, exercise regularly…">
+      </div>
+      <div class="form-group">
+        <label class="form-label">When to See Doctor</label>
+        <input class="form-control" name="whenToSeeDoctor" placeholder="If blood sugar exceeds 300 mg/dL…">
+      </div>
+      <div class="d-flex gap-2 mt-4">
+        <button type="submit" class="btn btn-primary" id="saveBtn"><i class="fas fa-save"></i> Save Disease</button>
+        <button type="button" class="btn btn-outline" onclick="closeDiseaseModal()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+let currentPage = 1;
+let editingId = null;
+const debounce = (fn, ms) => { let t; return (...args) => { clearTimeout(t); t=setTimeout(()=>fn(...args),ms); }; };
+
+async function loadDiseases(page = 1) {
+  currentPage = page;
+  const search   = document.getElementById('diseaseSearch').value;
+  const category = document.getElementById('categoryFilter').value;
+  const tbody    = document.getElementById('diseaseTableBody');
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px"><div class="loading-spinner dark" style="margin:0 auto"></div></td></tr>';
+  try {
+    const q    = new URLSearchParams({ page, limit:15, search, category }).toString();
+    const data = await api.get(`/api/admin/diseases?${q}`);
+    tbody.innerHTML = data.diseases.map(d => `
+      <tr>
+        <td style="font-weight:600">${d.name}</td>
+        <td><span class="badge badge-info">${d.category||'—'}</span></td>
+        <td><span class="badge badge-${d.severity==='severe'||d.severity==='critical'?'danger':d.severity==='moderate'?'warning':'success'}">${d.severity||'—'}</span></td>
+        <td style="font-size:12px;color:var(--text-muted)">${(d.symptoms||[]).slice(0,3).join(', ')}${(d.symptoms||[]).length>3?'…':''}</td>
+        <td style="font-weight:600">${d.searchCount||0}</td>
+        <td>
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline" onclick="editDisease(${JSON.stringify(d).replace(/"/g,'&quot;')})"><i class="fas fa-edit"></i></button>
+            <button class="btn btn-sm btn-danger" onclick="deleteDisease('${d._id}','${d.name}')"><i class="fas fa-trash"></i></button>
+          </div>
+        </td>
+      </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted)">No diseases found</td></tr>';
+
+    document.getElementById('diseasePagination').innerHTML = Array.from({length:data.pages},(_,i)=>
+      `<button class="btn btn-sm ${i+1===currentPage?'btn-primary':'btn-outline'}" onclick="loadDiseases(${i+1})">${i+1}</button>`
+    ).join('');
+  } catch(e) { showToast(e.message,'error'); }
+}
+
+function openDiseaseModal() {
+  editingId = null;
+  document.getElementById('modalTitle').innerHTML = '<i class="fas fa-plus"></i> Add Disease';
+  document.getElementById('diseaseForm').reset();
+  document.getElementById('modalAlert').innerHTML = '';
+  document.getElementById('diseaseModal').style.display = 'block';
+}
+
+function closeDiseaseModal() { document.getElementById('diseaseModal').style.display = 'none'; editingId = null; }
+
+function editDisease(d) {
+  editingId = d._id;
+  document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Disease';
+  const f = document.getElementById('diseaseForm');
+  ['name','description','category','severity','icd10Code','whenToSeeDoctor'].forEach(k => {
+    if (f[k]) f[k].value = d[k] || '';
+  });
+  if (f.symptoms)    f.symptoms.value    = (d.symptoms||[]).join(', ');
+  if (f.precautions) f.precautions.value = (d.precautions||[]).join(', ');
+  document.getElementById('modalAlert').innerHTML = '';
+  document.getElementById('diseaseModal').style.display = 'block';
+}
+
+document.getElementById('diseaseForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('saveBtn');
+  const alertDiv = document.getElementById('modalAlert');
+  setButtonLoading(btn, true, 'Saving…');
+
+  const fd = Object.fromEntries(new FormData(e.target));
+  if (fd.symptoms)    fd.symptoms    = fd.symptoms.split(',').map(s=>s.trim()).filter(Boolean);
+  if (fd.precautions) fd.precautions = fd.precautions.split(',').map(s=>s.trim()).filter(Boolean);
+
+  try {
+    if (editingId) {
+      await api.put(`/api/admin/diseases/${editingId}`, fd);
+    } else {
+      await api.post('/api/admin/diseases', fd);
+    }
+    showToast('Disease saved', 'success');
+    closeDiseaseModal();
+    loadDiseases(currentPage);
+  } catch(err) {
+    alertDiv.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> ${err.message}</div>`;
+  } finally { setButtonLoading(btn, false); }
+});
+
+async function deleteDisease(id, name) {
+  if (!confirm(`Delete disease "${name}"?`)) return;
+  try {
+    await api.delete(`/api/admin/diseases/${id}`);
+    showToast('Disease deleted', 'success');
+    loadDiseases(currentPage);
+  } catch(e) { showToast(e.message,'error'); }
+}
+
+document.addEventListener('DOMContentLoaded', loadDiseases);
+</script>

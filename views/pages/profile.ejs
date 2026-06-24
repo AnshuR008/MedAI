@@ -1,0 +1,186 @@
+<div class="page-header">
+  <div>
+    <div class="page-title">Health Profile</div>
+    <div class="page-subtitle">Manage your personal health information</div>
+  </div>
+</div>
+
+<div id="profileAlert"></div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fas fa-user"></i> Personal Information</div>
+    </div>
+    <form id="profileForm">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input type="text" class="form-control" name="name" value="<%= user.name %>" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-control" value="<%= user.email %>" disabled>
+      </div>
+      <div class="grid-2" style="gap:12px">
+        <div class="form-group">
+          <label class="form-label">Age</label>
+          <input type="number" class="form-control" name="age" value="<%= profile?.age || '' %>" min="0" max="150">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Gender</label>
+          <select class="form-control" name="gender">
+            <option value="">Select</option>
+            <option value="male" <%= profile?.gender === 'male' ? 'selected' : '' %>>Male</option>
+            <option value="female" <%= profile?.gender === 'female' ? 'selected' : '' %>>Female</option>
+            <option value="other" <%= profile?.gender === 'other' ? 'selected' : '' %>>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid-2" style="gap:12px">
+        <div class="form-group">
+          <label class="form-label">Weight (kg)</label>
+          <input type="number" class="form-control" name="weight" value="<%= profile?.weight || '' %>" min="0" step="0.1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Height (cm)</label>
+          <input type="number" class="form-control" name="height" value="<%= profile?.height || '' %>" min="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Blood Group</label>
+        <select class="form-control" name="bloodGroup">
+          <option value="">Unknown</option>
+          <% ['A+','A-','B+','B-','AB+','AB-','O+','O-'].forEach(bg => { %>
+          <option value="<%= bg %>" <%= profile?.bloodGroup === bg ? 'selected' : '' %>><%= bg %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Known Allergies (comma separated)</label>
+        <input type="text" class="form-control" name="allergies" value="<%= profile?.allergies?.join(', ') || '' %>" placeholder="e.g. penicillin, pollen, peanuts">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Existing Conditions (comma separated)</label>
+        <input type="text" class="form-control" name="existingConditions" value="<%= profile?.existingConditions?.join(', ') || '' %>" placeholder="e.g. diabetes, hypertension">
+      </div>
+      <button type="submit" class="btn btn-primary" id="saveProfileBtn">
+        <i class="fas fa-save"></i> Save Profile
+      </button>
+    </form>
+  </div>
+
+  <div>
+    <!-- BMI Card -->
+    <div class="card mb-6">
+      <div class="card-header">
+        <div class="card-title"><i class="fas fa-weight"></i> BMI Calculator</div>
+      </div>
+      <% if (profile?.bmi) { %>
+      <div style="text-align:center;padding:16px">
+        <div style="font-size:52px;font-weight:800;color:var(--teal)"><%= profile.bmi.toFixed(1) %></div>
+        <div style="font-size:14px;color:var(--text-muted);margin-bottom:16px">Body Mass Index</div>
+        <%
+          const bmi = profile.bmi;
+          let bmiCategory = 'Normal';
+          let bmiColor = 'success';
+          if (bmi < 18.5) { bmiCategory = 'Underweight'; bmiColor = 'info'; }
+          else if (bmi >= 25 && bmi < 30) { bmiCategory = 'Overweight'; bmiColor = 'warning'; }
+          else if (bmi >= 30) { bmiCategory = 'Obese'; bmiColor = 'danger'; }
+        %>
+        <span class="badge badge-<%= bmiColor %>" style="font-size:13px;padding:6px 16px"><%= bmiCategory %></span>
+        
+        <div style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:left">
+          <div style="background:var(--gray-100);border-radius:8px;padding:10px">
+            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.6px">Underweight</div>
+            <div style="font-size:13px;font-weight:600">&lt; 18.5</div>
+          </div>
+          <div style="background:rgba(16,185,129,0.1);border-radius:8px;padding:10px">
+            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.6px">Normal</div>
+            <div style="font-size:13px;font-weight:600;color:var(--success)">18.5 – 24.9</div>
+          </div>
+          <div style="background:rgba(245,158,11,0.1);border-radius:8px;padding:10px">
+            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.6px">Overweight</div>
+            <div style="font-size:13px;font-weight:600;color:var(--warning)">25 – 29.9</div>
+          </div>
+          <div style="background:rgba(239,68,68,0.1);border-radius:8px;padding:10px">
+            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.6px">Obese</div>
+            <div style="font-size:13px;font-weight:600;color:var(--danger)">&geq; 30</div>
+          </div>
+        </div>
+      </div>
+      <% } else { %>
+      <div class="empty-state" style="padding:24px">
+        <p>Enter your weight and height to calculate BMI</p>
+      </div>
+      <% } %>
+    </div>
+
+    <!-- Change Password Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="fas fa-lock"></i> Change Password</div>
+      </div>
+      <div id="passwordAlert"></div>
+      <form id="passwordForm">
+        <div class="form-group">
+          <label class="form-label">Current Password</label>
+          <input type="password" class="form-control" name="currentPassword" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">New Password</label>
+          <input type="password" class="form-control" name="newPassword" required minlength="6">
+        </div>
+        <button type="submit" class="btn btn-outline" id="changePasswordBtn">
+          <i class="fas fa-key"></i> Change Password
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('profileForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('saveProfileBtn');
+  const alertDiv = document.getElementById('profileAlert');
+  const formData = Object.fromEntries(new FormData(e.target));
+
+  setButtonLoading(btn, true, 'Saving...');
+  alertDiv.innerHTML = '';
+
+  try {
+    const data = await api.put('/api/profile', formData);
+    if (data.success) {
+      alertDiv.innerHTML = `<div class="alert alert-success"><i class="fas fa-check-circle"></i> Profile updated successfully</div>`;
+      showToast('Profile saved!', 'success');
+    }
+  } catch (err) {
+    alertDiv.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> ${err.message}</div>`;
+  } finally {
+    setButtonLoading(btn, false);
+  }
+});
+
+document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('changePasswordBtn');
+  const alertDiv = document.getElementById('passwordAlert');
+  const formData = Object.fromEntries(new FormData(e.target));
+
+  setButtonLoading(btn, true, 'Changing...');
+  alertDiv.innerHTML = '';
+
+  try {
+    const data = await api.put('/api/change-password', formData);
+    if (data.success) {
+      alertDiv.innerHTML = `<div class="alert alert-success"><i class="fas fa-check-circle"></i> Password changed successfully</div>`;
+      e.target.reset();
+      showToast('Password changed!', 'success');
+    }
+  } catch (err) {
+    alertDiv.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> ${err.message}</div>`;
+  } finally {
+    setButtonLoading(btn, false);
+  }
+});
+</script>

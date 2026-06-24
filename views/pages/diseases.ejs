@@ -1,0 +1,53 @@
+<div class="page-header">
+  <div>
+    <div class="page-title">Disease Database</div>
+    <div class="page-subtitle">Search for comprehensive disease information</div>
+  </div>
+</div>
+
+<div class="card mb-6">
+  <div class="card-header">
+    <div class="card-title"><i class="fas fa-search"></i> Search Diseases</div>
+  </div>
+
+  <div style="display:flex;gap:12px">
+    <div class="input-group" style="flex:1">
+      <i class="fas fa-search input-icon"></i>
+      <input type="text" class="form-control" id="diseaseSearch" placeholder="Search: diabetes, influenza, asthma..." autocomplete="off">
+    </div>
+    <button class="btn btn-primary" id="diseaseSearchBtn">
+      <i class="fas fa-search"></i> Search
+    </button>
+  </div>
+
+  <div style="margin-top:16px">
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Popular Searches</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <% ['Diabetes', 'Hypertension', 'Influenza', 'Asthma', 'Migraine', 'Anxiety', 'Gastritis', 'Depression', 'Common Cold', 'Urinary Tract Infection'].forEach(d => { %>
+      <button class="btn btn-outline btn-sm disease-quick-search">
+        <i class="fas fa-search" style="font-size:10px;opacity:0.7"></i> <%= d %>
+      </button>
+      <% }) %>
+    </div>
+  </div>
+</div>
+
+<div id="diseaseResults">
+  <div class="empty-state" style="padding:60px">
+    <div class="empty-icon"><i class="fas fa-heartbeat"></i></div>
+    <h3>Search the Medical Database</h3>
+    <p>Enter a disease name above to find detailed medical information, symptoms, treatments, and more.</p>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.disease-quick-search').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const diseaseSearch = document.getElementById('diseaseSearch');
+    if (diseaseSearch) {
+      diseaseSearch.value = btn.textContent.trim();
+      document.getElementById('diseaseSearchBtn')?.click();
+    }
+  });
+});
+</script>

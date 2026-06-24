@@ -1,0 +1,117 @@
+<div class="page-header">
+  <div>
+    <div class="page-title">AI Medical Assistant</div>
+    <div class="page-subtitle">Ask anything about symptoms, diseases, or health advice</div>
+  </div>
+</div>
+
+<div class="chat-layout">
+  <!-- Chat Sidebar -->
+  <div class="chat-sidebar">
+    <div class="chat-sidebar-header">
+      <button class="btn btn-primary btn-full btn-sm" id="newChatBtn">
+        <i class="fas fa-plus"></i> New Conversation
+      </button>
+    </div>
+    <div class="chat-list" id="chatList">
+      <% if (chats && chats.length > 0) { %>
+        <% chats.forEach(chat => { %>
+        <div class="chat-item" data-chat-id="<%= chat._id %>">
+          <div class="chat-item-title"><%= chat.sessionTitle %></div>
+          <div class="chat-item-time">
+            <%= new Date(chat.updatedAt).toLocaleDateString() %>
+          </div>
+        </div>
+        <% }) %>
+      <% } else { %>
+        <div style="padding:20px;text-align:center;font-size:13px;color:var(--text-muted)">
+          No conversations yet
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Chat Main -->
+  <div class="chat-main">
+    <div class="chat-header">
+      <div class="chat-ai-avatar">
+        <i class="fas fa-robot"></i>
+      </div>
+      <div>
+        <div style="font-size:15px;font-weight:700">MedAI Assistant</div>
+        <div class="chat-ai-status">
+          <div class="status-dot"></div>
+          Online — AI-Powered
+        </div>
+      </div>
+      <div style="margin-left:auto">
+        <span class="badge badge-success"><i class="fas fa-shield-alt"></i> Secure Chat</span>
+      </div>
+    </div>
+
+    <div class="messages-area" id="messagesArea">
+      <!-- Welcome message -->
+      <div class="message assistant-message">
+        <div class="message-avatar">AI</div>
+        <div>
+          <div class="message-bubble">
+            Hello, <strong><%= user.name.split(' ')[0] %></strong>! I'm MedAI, your AI medical information assistant. 🏥<br><br>
+            I can help you with:
+            <ul style="margin:8px 0 0 16px;font-size:13px;line-height:1.8">
+              <li>Understanding symptoms and conditions</li>
+              <li>Information about medications and treatments</li>
+              <li>Diet and lifestyle recommendations</li>
+              <li>When to seek professional medical care</li>
+            </ul>
+            <br>
+            How can I assist you today?
+          </div>
+          <div class="message-time">Just now</div>
+        </div>
+      </div>
+
+      <!-- Typing indicator -->
+      <div class="typing-indicator" id="typingIndicator" style="display:none">
+        <div class="message-avatar" style="width:34px;height:34px;background:linear-gradient(135deg,var(--navy),var(--navy-mid));color:var(--teal-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">AI</div>
+        <div class="typing-dots">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick questions -->
+    <div style="padding:0 24px 12px;display:flex;gap:8px;flex-wrap:wrap">
+      <% ['What causes headaches?', 'Symptoms of diabetes', 'Foods to boost immunity', 'Signs of hypertension'].forEach(q => { %>
+      <button class="btn btn-outline btn-sm quick-question" data-question="<%= q %>">
+        <%= q %>
+      </button>
+      <% }) %>
+    </div>
+
+    <div class="chat-input-area">
+      <div class="chat-input-wrapper">
+        <textarea class="chat-input" id="chatInput" rows="1" placeholder="Ask a health question..."></textarea>
+      </div>
+      <button class="btn btn-primary btn-icon" id="sendBtn" title="Send message">
+        <i class="fas fa-paper-plane"></i>
+      </button>
+    </div>
+
+    <div style="padding:8px 24px 12px;font-size:11px;color:var(--text-muted);text-align:center">
+      <i class="fas fa-info-circle"></i> AI provides information only. Always consult a doctor for medical decisions.
+    </div>
+  </div>
+</div>
+
+<script>
+// Quick questions
+document.querySelectorAll('.quick-question').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const input = document.getElementById('chatInput');
+    if (input) {
+      input.value = btn.dataset.question;
+      input.focus();
+    }
+  });
+});
+</script>

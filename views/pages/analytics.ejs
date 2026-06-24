@@ -1,0 +1,48 @@
+<div class="page-header">
+  <div>
+    <div class="page-title">Health Analytics</div>
+    <div class="page-subtitle">Visualize your health journey and prediction trends</div>
+  </div>
+</div>
+
+<div class="stats-grid mb-6">
+  <div class="stat-card blue">
+    <div class="stat-icon blue"><i class="fas fa-stethoscope"></i></div>
+    <div class="stat-value" id="totalPredictions">0</div>
+    <div class="stat-label">Total Predictions</div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-icon green"><i class="fas fa-comment-medical"></i></div>
+    <div class="stat-value" id="totalChats">0</div>
+    <div class="stat-label">AI Consultations</div>
+  </div>
+  <div class="stat-card orange">
+    <div class="stat-icon orange"><i class="fas fa-file-medical"></i></div>
+    <div class="stat-value" id="totalReports">0</div>
+    <div class="stat-label">Reports Generated</div>
+  </div>
+</div>
+
+<div class="grid-2 mb-6">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fas fa-chart-bar"></i> Top Predicted Conditions</div>
+    </div>
+    <canvas id="topDiseasesChart" height="200"></canvas>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fas fa-chart-line"></i> Daily Prediction Activity</div>
+    </div>
+    <canvas id="dailyPredictionsChart" height="200"></canvas>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><i class="fas fa-chart-pie"></i> Severity Distribution</div>
+  </div>
+  <div style="max-width:300px;margin:0 auto">
+    <canvas id="severityChart" height="200"></canvas>
+  </div>
+</div>

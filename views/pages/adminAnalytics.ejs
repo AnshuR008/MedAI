@@ -1,0 +1,247 @@
+<div class="page-header">
+  <div>
+    <div class="page-title">Analytics Dashboard</div>
+    <div class="page-subtitle">Platform-wide metrics and trends</div>
+  </div>
+  <div class="d-flex gap-2 align-center">
+    <span class="badge badge-danger"><i class="fas fa-shield-alt"></i> Admin</span>
+    <button class="btn btn-outline btn-sm" onclick="loadAll()">
+      <i class="fas fa-sync-alt"></i> Refresh
+    </button>
+  </div>
+</div>
+
+<!-- Summary stats -->
+<div class="stats-grid mb-6" id="summaryStats">
+  <div class="stat-card blue">
+    <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+    <div class="stat-value" id="statTotalUsers">—</div>
+    <div class="stat-label">Total Users</div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-icon green"><i class="fas fa-stethoscope"></i></div>
+    <div class="stat-value" id="statTotalPred">—</div>
+    <div class="stat-label">Total Predictions</div>
+  </div>
+  <div class="stat-card orange">
+    <div class="stat-icon orange"><i class="fas fa-comment-medical"></i></div>
+    <div class="stat-value" id="statTotalChats">—</div>
+    <div class="stat-label">Chat Sessions</div>
+  </div>
+  <div class="stat-card purple">
+    <div class="stat-icon purple"><i class="fas fa-user-check"></i></div>
+    <div class="stat-value" id="statActiveToday">—</div>
+    <div class="stat-label">Active Today</div>
+  </div>
+</div>
+
+<div class="grid-2 mb-6">
+  <!-- User registrations -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fas fa-user-plus"></i> User Registrations (30 days)</div>
+    </div>
+    <canvas id="regTrendChart" height="200"></canvas>
+  </div>
+
+  <!-- Daily predictions -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fas fa-chart-line"></i> Daily Predictions (30 days)</div>
+    </div>
+    <canvas id="predTrendChart" height="200"></canvas>
+  </div>
+</div>
+
+<div class="grid-2 mb-6">
+  <!-- Top diseases bar -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fas fa-chart-bar"></i> Top Predicted Conditions</div>
+    </div>
+    <canvas id="topDisChart" height="220"></canvas>
+  </div>
+
+  <!-- Severity pie -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fas fa-chart-pie"></i> Predictions by Severity</div>
+    </div>
+    <div style="max-width:280px;margin:0 auto">
+      <canvas id="severityChart" height="220"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Top searched diseases table -->
+<div class="card mb-6">
+  <div class="card-header">
+    <div class="card-title"><i class="fas fa-search"></i> Most Searched Diseases</div>
+  </div>
+  <div class="table-wrapper">
+    <table id="diseaseSearchTable">
+      <thead><tr><th>#</th><th>Disease</th><th>Category</th><th>Searches</th><th>Trend</th></tr></thead>
+      <tbody id="diseaseSearchBody">
+        <tr><td colspan="5" class="text-center" style="padding:24px;color:var(--text-muted)">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Recent activity -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><i class="fas fa-stream"></i> Recent Activity Feed</div>
+  </div>
+  <div id="activityFeed" style="max-height:360px;overflow-y:auto">
+    <div class="empty-state"><div class="loading-spinner dark" style="margin:0 auto 12px"></div><p>Loading…</p></div>
+  </div>
+</div>
+
+<script>
+const COLORS = ['#00b4d8','#06d6a0','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316'];
+
+async function loadAll() {
+  await Promise.all([loadSummary(), loadUserAnalytics(), loadPredictionAnalytics(), loadDiseaseAnalytics(), loadActivity()]);
+}
+
+async function loadSummary() {
+  try {
+    const { data } = await api.get('/api/admin/analytics/summary');
+    const s = data;
+    animateCount(document.getElementById('statTotalUsers'),  s.users.total);
+    animateCount(document.getElementById('statTotalPred'),   s.predictions.total);
+    animateCount(document.getElementById('statTotalChats'),  s.chats);
+    animateCount(document.getElementById('statActiveToday'), s.users.activeToday);
+  } catch(e) { showToast('Failed to load summary', 'error'); }
+}
+
+let regChart, predChart, topDisChartInst, sevChart;
+
+async function loadUserAnalytics() {
+  try {
+    const { data } = await api.get('/api/admin/analytics/users');
+    const ctx = document.getElementById('regTrendChart').getContext('2d');
+    if (regChart) regChart.destroy();
+    regChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: data.registrationTrend.map(d => d.date.slice(5)),
+        datasets: [{ label:'New Users', data: data.registrationTrend.map(d => d.count),
+          borderColor:'#06d6a0', backgroundColor:'rgba(6,214,160,0.1)', fill:true, tension:0.4,
+          pointRadius:3, pointBackgroundColor:'#06d6a0' }]
+      },
+      options: { responsive:true, plugins:{legend:{display:false}},
+        scales:{ y:{beginAtZero:true, grid:{color:'rgba(0,0,0,0.05)'}}, x:{grid:{display:false}} } }
+    });
+  } catch(e) {}
+}
+
+async function loadPredictionAnalytics() {
+  try {
+    const { data } = await api.get('/api/admin/analytics/predictions');
+
+    // Daily trend
+    const pCtx = document.getElementById('predTrendChart').getContext('2d');
+    if (predChart) predChart.destroy();
+    predChart = new Chart(pCtx, {
+      type: 'bar',
+      data: {
+        labels: data.dailyTrend.map(d => d.date.slice(5)),
+        datasets: [{ label:'Predictions', data: data.dailyTrend.map(d => d.count),
+          backgroundColor:'rgba(0,180,216,0.75)', borderRadius:4 }]
+      },
+      options: { responsive:true, plugins:{legend:{display:false}},
+        scales:{ y:{beginAtZero:true, grid:{color:'rgba(0,0,0,0.05)'}}, x:{grid:{display:false}} } }
+    });
+
+    // Top diseases
+    const dCtx = document.getElementById('topDisChart').getContext('2d');
+    if (topDisChartInst) topDisChartInst.destroy();
+    topDisChartInst = new Chart(dCtx, {
+      type: 'bar',
+      data: {
+        labels: data.topDiseases.map(d => d.disease),
+        datasets: [{ data: data.topDiseases.map(d => d.count),
+          backgroundColor: data.topDiseases.map((_, i) => COLORS[i % COLORS.length]), borderRadius:6 }]
+      },
+      options: { indexAxis:'y', responsive:true, plugins:{legend:{display:false}},
+        scales:{ x:{beginAtZero:true, grid:{color:'rgba(0,0,0,0.05)'}}, y:{grid:{display:false}} } }
+    });
+
+    // Severity pie
+    if (data.bySeverity.length) {
+      const sevColors = { mild:'#10b981', moderate:'#f59e0b', severe:'#ef4444', critical:'#7c3aed' };
+      const sCtx = document.getElementById('severityChart').getContext('2d');
+      if (sevChart) sevChart.destroy();
+      sevChart = new Chart(sCtx, {
+        type: 'doughnut',
+        data: {
+          labels: data.bySeverity.map(s => s.severity || 'unknown'),
+          datasets: [{ data: data.bySeverity.map(s => s.count),
+            backgroundColor: data.bySeverity.map(s => sevColors[s.severity] || '#94a3b8'),
+            borderWidth:2, borderColor:'white' }]
+        },
+        options: { responsive:true, cutout:'65%', plugins:{legend:{position:'bottom'}} }
+      });
+    }
+  } catch(e) {}
+}
+
+async function loadDiseaseAnalytics() {
+  try {
+    const { data } = await api.get('/api/admin/analytics/diseases');
+    const tbody = document.getElementById('diseaseSearchBody');
+    if (!data.topSearched.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">No disease search data yet</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.topSearched.map((d, i) => `
+      <tr>
+        <td style="color:var(--text-muted);font-size:12px">${i+1}</td>
+        <td style="font-weight:600">${d.name}</td>
+        <td><span class="badge badge-info">${d.category || '—'}</span></td>
+        <td style="font-weight:600">${(d.count||0).toLocaleString()}</td>
+        <td>
+          <div class="progress" style="width:80px">
+            <div class="progress-bar" style="width:${Math.min(100, (d.count / (data.topSearched[0]?.count||1)) * 100)}%"></div>
+          </div>
+        </td>
+      </tr>`).join('');
+  } catch(e) {}
+}
+
+async function loadActivity() {
+  try {
+    const { data } = await api.get('/api/admin/analytics/activity');
+    const feed = document.getElementById('activityFeed');
+    const items = [
+      ...data.recentUsers.slice(0,10).map(u => ({
+        icon:'fa-user-plus', color:'green',
+        text:`<strong>${u.name}</strong> registered`,
+        sub: u.email, time: u.createdAt
+      })),
+      ...data.recentPredictions.slice(0,10).map(p => ({
+        icon:'fa-stethoscope', color:'blue',
+        text:`Prediction: <strong>${p.primaryDiagnosis?.disease || 'Unknown'}</strong>`,
+        sub: (p.symptoms||[]).slice(0,3).join(', '), time: p.createdAt
+      })),
+    ].sort((a,b) => new Date(b.time) - new Date(a.time)).slice(0,20);
+
+    feed.innerHTML = items.map(item => `
+      <div class="d-flex align-center gap-2" style="padding:12px 20px;border-bottom:1px solid var(--gray-100)">
+        <div style="width:34px;height:34px;border-radius:50%;background:rgba(${item.color==='green'?'6,214,160':'0,180,216'},0.12);
+             display:flex;align-items:center;justify-content:center;color:var(--${item.color==='green'?'green':'teal'});flex-shrink:0">
+          <i class="fas ${item.icon}" style="font-size:13px"></i>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px">${item.text}</div>
+          <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.sub}</div>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);white-space:nowrap">${timeAgo(item.time)}</div>
+      </div>`).join('') || '<div class="empty-state" style="padding:32px"><p>No activity yet</p></div>';
+  } catch(e) {}
+}
+
+document.addEventListener('DOMContentLoaded', loadAll);
+</script>

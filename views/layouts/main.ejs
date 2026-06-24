@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title || 'MedAI' %></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
+</head>
+<body class="app-layout">
+  <%- include('../partials/sidebar') %>
+  <div class="main-wrapper">
+    <%- include('../partials/topbar') %>
+    <%- include('../partials/alerts') %>
+    <main class="content-area"><%- body %></main>
+  </div>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <script src="/js/main.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
