@@ -21,9 +21,11 @@ const { apiLimiter } = require('./server/middlewares/rateLimiter');
 const logger         = require('./server/utils/logger');
 const aiChat         = require('./server/services/aiChatService');
 
-// Ensure logs dir
-const logsDir = path.join(__dirname, 'logs');
-if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir, { recursive: true });
+// Vercel's filesystem is read-only; its runtime logs are available in the dashboard.
+if (!process.env.VERCEL) {
+  const logsDir = path.join(__dirname, 'logs');
+  if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir, { recursive: true });
+}
 
 const app    = express();
 const server = http.createServer(app);
