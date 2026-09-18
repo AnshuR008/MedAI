@@ -125,5 +125,5 @@ async function seedDemo() {
   } catch(e) { logger.warn(`Seed warning: ${e.message}`); }
 }
 
-if (process.env.NODE_ENV !== "test") start();
-module.exports = { app, server };
+if (require.main === module && process.env.NODE_ENV !== 'test') start();
+module.exports = { app, server, start };
