@@ -20,7 +20,7 @@ const transports = [
 ];
 
 // Vercel's filesystem is read-only. Its runtime logs are available in the dashboard.
-if (!process.env.VERCEL) {
+if (!process.env.VERCEL && process.env.NODE_ENV !== 'production') {
   const logsDir = path.join(__dirname, '../../logs');
   fs.mkdirSync(logsDir, { recursive: true });
   transports.push(
